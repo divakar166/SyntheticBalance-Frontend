@@ -1,64 +1,125 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { UploadSection } from '@/components/UploadSection';
+import { SchemaDetectionTable } from '@/components/SchemaDetectionTable';
+import { TargetColumnCard } from '@/components/TargetColumnCard';
+import { ClassImbalanceWarning } from '@/components/ClassImbalanceWarning';
+import { FeatureStatisticsDashboard } from '@/components/FeatureStatisticsDashboard';
+import { NavigationFooter } from '@/components/NavigationFooter';
+import { useRouter } from 'next/navigation';
+
+interface DatasetMetadata {
+  dataset_id: string;
+  n_rows: number;
+  n_features: number;
+  class_dist: Record<string, number>;
+  schema: {
+    features: Record<string, any>;
+  };
+  filename?: string;
+  target_column?: string;
+}
 
 export default function Home() {
+  const router = useRouter();
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [datasetMetadata, setDatasetMetadata] = useState<DatasetMetadata | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState('fraud');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUploadComplete = (data: DatasetMetadata) => {
+    setDatasetMetadata(data);
+    setUploadStatus('success');
+    setError(null);
+  };
+
+  const handleProceed = () => {
+    if (datasetMetadata) {
+      sessionStorage.setItem('datasetMetadata', JSON.stringify({
+        ...datasetMetadata,
+        selectedTarget,
+      }));
+      router.push('/train');
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-background">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold tracking-tight">
+            Synthetic Data Generator
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-2 text-lg text-muted-foreground">
+            Upload your dataset and explore its structure to generate balanced training data
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+
+        {/* Main Content */}
+        {uploadStatus === 'idle' ? (
+          // Initial Upload State
+          <UploadSection
+            onUploadComplete={handleUploadComplete}
+            isLoading={uploadStatus === 'uploading'}
+            error={error}
+            onTargetChange={setSelectedTarget}
+            selectedTarget={selectedTarget}
+          />
+        ) : uploadStatus === 'success' && datasetMetadata ? (
+          // Post-Upload Analysis State
+          <div className="space-y-8">
+            {/* Dataset Summary Header */}
+            <div className="rounded-lg bg-muted/50 p-6">
+              <h2 className="text-2xl font-bold">Dataset Analysis</h2>
+              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Rows</p>
+                  <p className="text-2xl font-bold">
+                    {datasetMetadata.n_rows.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Features</p>
+                  <p className="text-2xl font-bold">{datasetMetadata.n_features}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Dataset ID</p>
+                  <p className="truncate text-sm font-mono">{datasetMetadata.dataset_id.slice(0, 12)}...</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Target Column</p>
+                  <p className="text-2xl font-bold">{selectedTarget}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Class Imbalance Warning */}
+            <ClassImbalanceWarning
+              classDistribution={datasetMetadata.class_dist}
+              selectedTarget={selectedTarget}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+            {/* Target Column Visualization */}
+            <TargetColumnCard
+              targetColumn={selectedTarget}
+              classDistribution={datasetMetadata.class_dist}
+            />
+
+            {/* Feature Schema Table */}
+            <SchemaDetectionTable features={datasetMetadata.schema.features} />
+
+            {/* Feature Statistics Dashboard */}
+            <FeatureStatisticsDashboard features={datasetMetadata.schema.features} />
+
+            {/* Navigation Footer */}
+            <NavigationFooter
+              onProceed={handleProceed}
+              isLoaded={uploadStatus === 'success'}
+            />
+          </div>
+        ) : null}
       </main>
     </div>
   );

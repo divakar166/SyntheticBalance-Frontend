@@ -12,7 +12,12 @@ interface TrainingConfig {
 interface TrainingStatus {
     status: 'idle' | 'training' | 'completed' | 'failed';
     currentEpoch: number;
-    lossHistory: number[];
+    totalEpochs?: number;
+    lossHistory: Array<{
+        epoch: number;
+        generator_loss: number;
+        discriminator_loss: number;
+    }>;
     elapsedTime: number;
     modelId?: string;
     epochsRun?: number;
@@ -45,31 +50,29 @@ export function TrainingProgressSection({
     status,
     onCancel,
 }: TrainingProgressSectionProps) {
-    const progress = (status.currentEpoch / config.epochs) * 100;
-
-    // Prepare chart data
-    const chartData = status.lossHistory.map((loss, index) => ({
-        epoch: index + 1,
-        loss: parseFloat(loss.toFixed(4)),
+    const totalEpochs = status.totalEpochs || config.epochs;
+    const progress = totalEpochs > 0 ? (status.currentEpoch / totalEpochs) * 100 : 0;
+    const chartData = status.lossHistory.map((loss) => ({
+        epoch: loss.epoch,
+        generator: Number(loss.generator_loss.toFixed(4)),
+        discriminator: Number(loss.discriminator_loss.toFixed(4)),
     }));
 
     return (
         <div className="space-y-8">
-            {/* Progress Card */}
             <Card>
                 <CardHeader>
                     <CardTitle>Training in Progress</CardTitle>
                     <CardDescription>
-                        {config.model} • {config.epochs} epochs • Batch size {config.batchSize}
+                        {config.model} / {totalEpochs} epochs / Batch size {config.batchSize}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {/* Epoch Progress */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">Epoch Progress</span>
                             <span className="text-sm font-bold text-primary">
-                                {status.currentEpoch} / {config.epochs}
+                                {status.currentEpoch} / {totalEpochs}
                             </span>
                         </div>
                         <Progress value={progress} className="h-3" />
@@ -78,7 +81,6 @@ export function TrainingProgressSection({
                         </p>
                     </div>
 
-                    {/* Elapsed Time */}
                     <div className="rounded-lg bg-muted/50 p-4">
                         <p className="text-sm text-muted-foreground mb-1">Elapsed Time</p>
                         <p className="text-2xl font-bold font-mono">
@@ -86,7 +88,6 @@ export function TrainingProgressSection({
                         </p>
                     </div>
 
-                    {/* Loss Chart */}
                     {chartData.length > 0 && (
                         <div className="space-y-3">
                             <h4 className="text-sm font-medium">Training Loss History</h4>
@@ -113,8 +114,16 @@ export function TrainingProgressSection({
                                         />
                                         <Line
                                             type="monotone"
-                                            dataKey="loss"
+                                            dataKey="generator"
                                             stroke="hsl(var(--primary))"
+                                            strokeWidth={2}
+                                            dot={false}
+                                            isAnimationActive={false}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="discriminator"
+                                            stroke="hsl(var(--muted-foreground))"
                                             strokeWidth={2}
                                             dot={false}
                                             isAnimationActive={false}
@@ -125,7 +134,6 @@ export function TrainingProgressSection({
                         </div>
                     )}
 
-                    {/* Cancel Button */}
                     <Button onClick={onCancel} variant="outline" className="w-full">
                         Cancel Training
                     </Button>

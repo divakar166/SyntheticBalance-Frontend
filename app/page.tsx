@@ -1,152 +1,207 @@
 'use client';
 
-import { useState } from 'react';
-import { UploadSection } from '@/components/UploadSection';
-import { SchemaDetectionTable } from '@/components/SchemaDetectionTable';
-import { TargetColumnCard } from '@/components/TargetColumnCard';
-import { ClassImbalanceWarning } from '@/components/ClassImbalanceWarning';
-import { FeatureStatisticsDashboard } from '@/components/FeatureStatisticsDashboard';
-import { NavigationFooter } from '@/components/NavigationFooter';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface ClassImbalanceInfo {
-  minority_class: string;
-  minority_count: number;
-  minority_pct: number;
-  majority_class: string;
-  majority_count: number;
-  majority_pct: number;
-  class_ratio: string;
-  is_severe: boolean;
-  recommendation: string;
-}
-
-interface DatasetMetadata {
-  dataset_id: string;
-  n_rows: number;
-  n_features: number;
-  class_dist: Record<string, number>;
-  schema: {
-    features: Record<string, any>;
-    target: {
-      name: string;
-      type: string;
-      cardinality: number;
-      missing_count: number;
-      missing_pct: number;
-      class_distribution: Record<string, number>;
-    };
-    skipped_features: string[];
-  };
-  class_imbalance: ClassImbalanceInfo;
-  filename?: string;
-  target_column?: string;
-}
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Zap, Database, Brain } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function Home() {
   const router = useRouter();
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [datasetMetadata, setDatasetMetadata] = useState<DatasetMetadata | null>(null);
-  const [selectedTarget, setSelectedTarget] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { session, isLoading: isAuthLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleUploadComplete = (data: DatasetMetadata) => {
-    setDatasetMetadata(data);
-    setUploadStatus('success');
-    setError(null);
-    // Auto-set target from schema
-    const targetName = data.schema?.target?.name ?? data.target_column ?? '';
-    setSelectedTarget(targetName);
-  };
-
-  const handleProceed = () => {
-    if (datasetMetadata) {
-      sessionStorage.setItem('datasetMetadata', JSON.stringify({
-        ...datasetMetadata,
-        selectedTarget,
-      }));
-      router.push('/train');
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (session) {
+      router.push('/dashboard');
+    } else {
+      setIsLoading(false);
     }
-  };
+  }, [isAuthLoading, router, session]);
+
+  if (isLoading) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Synthetic Data Generator
-          </h1>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Upload your dataset and explore its structure to generate balanced training data
-          </p>
+      {/* Navigation */}
+      <nav className="border-b border-border/40 backdrop-blur-sm">
+        <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Database className="h-6 w-6 text-primary" />
+              <h1 className="text-xl font-bold">Synthetic Data Generator</h1>
+            </div>
+            <Button
+              onClick={() => router.push('/login')}
+              variant="default"
+            >
+              Login
+            </Button>
+          </div>
         </div>
+      </nav>
 
-        {/* Main Content */}
-        {uploadStatus === 'idle' ? (
-          // Initial Upload State
-          <UploadSection
-            onUploadComplete={handleUploadComplete}
-            isLoading={uploadStatus === 'uploading'}
-            error={error}
-            onTargetChange={setSelectedTarget}
-            selectedTarget={selectedTarget}
-          />
-        ) : uploadStatus === 'success' && datasetMetadata ? (
-          // Post-Upload Analysis State
-          <div className="space-y-8">
-            {/* Dataset Summary Header */}
-            <div className="rounded-lg bg-muted/50 p-6">
-              <h2 className="text-2xl font-bold">Dataset Analysis</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Rows</p>
-                  <p className="text-2xl font-bold">
-                    {datasetMetadata.n_rows.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Features</p>
-                  <p className="text-2xl font-bold">{datasetMetadata.n_features}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Dataset ID</p>
-                  <p className="truncate text-sm font-mono">{datasetMetadata.dataset_id.slice(0, 12)}...</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Target Column</p>
-                  <p className="text-2xl font-bold">{selectedTarget}</p>
-                </div>
+      {/* Hero Section */}
+      <section className="border-b border-border/40">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="space-y-8 text-center">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl">
+              Generate Balanced Training Data Effortlessly
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
+              Upload your imbalanced dataset and let our AI generate high-quality synthetic data to balance your classes. Perfect for machine learning projects that struggle with class imbalance.
+            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Button
+                size="lg"
+                onClick={() => router.push('/login')}
+                className="gap-2"
+              >
+                Get Started
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="border-b border-border/40">
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+          <h3 className="mb-12 text-center text-3xl font-bold">How It Works</h3>
+          <div className="grid gap-8 md:grid-cols-3">
+            {/* Step 1 */}
+            <div className="space-y-4 rounded-lg border border-border/40 bg-muted/50 p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Database className="h-6 w-6" />
               </div>
+              <h4 className="text-lg font-semibold">Step 1: Upload Data</h4>
+              <p className="text-sm text-muted-foreground">
+                Upload your CSV file with imbalanced data. We automatically detect your schema and class distribution.
+              </p>
             </div>
 
-            {/* Class Imbalance Warning — use backend's computed info when available */}
-            <ClassImbalanceWarning
-              classDistribution={datasetMetadata.class_dist}
-              selectedTarget={selectedTarget}
-              classImbalanceInfo={datasetMetadata.class_imbalance}
-            />
+            {/* Step 2 */}
+            <div className="space-y-4 rounded-lg border border-border/40 bg-muted/50 p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Brain className="h-6 w-6" />
+              </div>
+              <h4 className="text-lg font-semibold">Step 2: Train Model</h4>
+              <p className="text-sm text-muted-foreground">
+                Configure training parameters and let our CTGAN model learn the patterns of your data.
+              </p>
+            </div>
 
-            {/* Target Column Visualization */}
-            <TargetColumnCard
-              targetColumn={selectedTarget}
-              classDistribution={datasetMetadata.class_dist}
-            />
-
-            {/* Feature Schema Table */}
-            <SchemaDetectionTable features={datasetMetadata.schema.features} />
-
-            {/* Feature Statistics Dashboard */}
-            <FeatureStatisticsDashboard features={datasetMetadata.schema.features} />
-
-            {/* Navigation Footer */}
-            <NavigationFooter
-              onProceed={handleProceed}
-              isLoaded={uploadStatus === 'success'}
-            />
+            {/* Step 3 */}
+            <div className="space-y-4 rounded-lg border border-border/40 bg-muted/50 p-6">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Zap className="h-6 w-6" />
+              </div>
+              <h4 className="text-lg font-semibold">Step 3: Generate Data</h4>
+              <p className="text-sm text-muted-foreground">
+                Generate synthetic samples to balance your dataset and improve model performance.
+              </p>
+            </div>
           </div>
-        ) : null}
-      </main>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section>
+        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
+          <h3 className="mb-12 text-center text-3xl font-bold">Why Use Our Platform?</h3>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="space-y-3 rounded-lg border border-border/40 p-6">
+              <h4 className="font-semibold">Smart Data Analysis</h4>
+              <p className="text-sm text-muted-foreground">
+                Automatic feature detection and statistical analysis of your dataset. Know exactly what you&apos;re working with.
+              </p>
+            </div>
+            <div className="space-y-3 rounded-lg border border-border/40 p-6">
+              <h4 className="font-semibold">Advanced ML Models</h4>
+              <p className="text-sm text-muted-foreground">
+                Uses state-of-the-art CTGAN and Tabular Diffusion models for realistic synthetic data generation.
+              </p>
+            </div>
+            <div className="space-y-3 rounded-lg border border-border/40 p-6">
+              <h4 className="font-semibold">Configurable Training</h4>
+              <p className="text-sm text-muted-foreground">
+                Fine-tune epochs, batch size, and model selection to match your specific requirements.
+              </p>
+            </div>
+            <div className="space-y-3 rounded-lg border border-border/40 p-6">
+              <h4 className="font-semibold">Real-time Monitoring</h4>
+              <p className="text-sm text-muted-foreground">
+                Watch training progress with live loss charts and logs. Understand model behavior as it trains.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="border-t border-border/40 bg-muted/50">
+        <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="space-y-6 text-center">
+            <h3 className="text-3xl font-bold">Ready to Balance Your Data?</h3>
+            <p className="text-lg text-muted-foreground">
+              Start generating synthetic data today and improve your model&apos;s performance on minority classes.
+            </p>
+            <Button
+              size="lg"
+              onClick={() => router.push('/login')}
+              className="gap-2"
+            >
+              Get Started Now
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/40">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="grid gap-8 md:grid-cols-3">
+            <div>
+              <h4 className="font-semibold">Product</h4>
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground">Features</a></li>
+                <li><a href="#" className="hover:text-foreground">Pricing</a></li>
+                <li><a href="#" className="hover:text-foreground">Documentation</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold">Company</h4>
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground">About</a></li>
+                <li><a href="#" className="hover:text-foreground">Blog</a></li>
+                <li><a href="#" className="hover:text-foreground">Contact</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold">Legal</h4>
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <li><a href="#" className="hover:text-foreground">Privacy</a></li>
+                <li><a href="#" className="hover:text-foreground">Terms</a></li>
+                <li><a href="#" className="hover:text-foreground">Security</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-border/40 pt-8 text-center text-sm text-muted-foreground">
+            <p>&copy; 2026 Synthetic Data Generator. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

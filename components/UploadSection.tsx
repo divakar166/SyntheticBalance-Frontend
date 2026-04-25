@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Upload, FileText } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { uploadDataset } from '@/lib/api';
 
 interface UploadSectionProps {
   onUploadComplete: (data: any) => void;
@@ -27,7 +28,8 @@ export function UploadSection({
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [columns, setColumns] = useState<string[]>([]);
-  const [isReadingColumns, setIsReadingColumns] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const parseCSVColumns = (file: File) => {
     const reader = new FileReader();
@@ -84,25 +86,17 @@ export function UploadSection({
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('target', selectedTarget);
+    setUploadError(null);
+    setIsUploading(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
+      const data = await uploadDataset(selectedFile, selectedTarget);
       onUploadComplete(data);
     } catch (err) {
       console.error('Upload error:', err);
+      setUploadError(err instanceof Error ? err.message : 'Upload failed.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -138,9 +132,10 @@ export function UploadSection({
           <Input
             type="file"
             accept=".csv"
-            onChange={handleFileInput}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          />
+          onChange={handleFileInput}
+          disabled={isLoading || isUploading}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        />
         </div>
 
         {/* File Selection Display */}
@@ -162,7 +157,7 @@ export function UploadSection({
             <label className="text-sm font-medium">
               Target Column
             </label>
-            <Select value={selectedTarget} onValueChange={onTargetChange}>
+          <Select value={selectedTarget} onValueChange={onTargetChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -181,21 +176,21 @@ export function UploadSection({
         )}
 
         {/* Error Message */}
-        {error && (
+        {(error || uploadError) && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{error || uploadError}</AlertDescription>
           </Alert>
         )}
 
         {/* Upload Button */}
         <Button
           onClick={handleUpload}
-          disabled={!selectedFile || isLoading}
+          disabled={!selectedFile || isLoading || isUploading}
           className="w-full"
           size="lg"
         >
-          {isLoading ? (
+          {isLoading || isUploading ? (
             <>
               <Spinner className="mr-2 h-4 w-4" />
               Analyzing Dataset...

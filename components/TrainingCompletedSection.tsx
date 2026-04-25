@@ -6,7 +6,7 @@ import { CheckCircle2 } from 'lucide-react';
 interface TrainingStatus {
     status: 'idle' | 'training' | 'completed' | 'failed';
     currentEpoch: number;
-    lossHistory: number[];
+    lossHistory: unknown[];
     elapsedTime: number;
     modelId?: string;
     epochsRun?: number;

@@ -136,7 +136,7 @@ export function TrainingConfigSection({
                             <div>
                                 <p className="text-muted-foreground">Est. Duration</p>
                                 <p className="font-semibold">
-                                    {Math.ceil((config.epochs / 100) * 5)}–{Math.ceil((config.epochs / 100) * 10)} min
+                                    {Math.ceil((config.epochs / 100) * 5)}-{Math.ceil((config.epochs / 100) * 10)} min
                                 </p>
                             </div>
                         </div>

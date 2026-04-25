@@ -125,22 +125,6 @@ export function TrainingProgressSection({
                         </div>
                     )}
 
-                    {/* Live Log Console */}
-                    <div className="space-y-3">
-                        <h4 className="text-sm font-medium">Training Log</h4>
-                        <div className="h-48 rounded-lg border border-border bg-slate-950 p-4 overflow-y-auto font-mono text-sm text-green-400">
-                            {status.lossHistory.map((loss, index) => (
-                                <div key={index} className="mb-1">
-                                    <span className="text-muted-foreground">[Epoch {index + 1}]</span>{' '}
-                                    <span>Loss: {loss.toFixed(4)}</span>
-                                </div>
-                            ))}
-                            {status.currentEpoch === 0 && (
-                                <div className="text-muted-foreground">Initializing training...</div>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Cancel Button */}
                     <Button onClick={onCancel} variant="outline" className="w-full">
                         Cancel Training

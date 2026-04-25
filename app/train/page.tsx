@@ -79,7 +79,7 @@ export default function TrainPage() {
             } catch (error) {
                 console.error('Error polling training status:', error);
             }
-        }, 2000);
+        }, 5000);
 
         return () => clearInterval(interval);
     }, [trainingStatus.status, datasetId]);

@@ -9,6 +9,18 @@ import { FeatureStatisticsDashboard } from '@/components/FeatureStatisticsDashbo
 import { NavigationFooter } from '@/components/NavigationFooter';
 import { useRouter } from 'next/navigation';
 
+interface ClassImbalanceInfo {
+  minority_class: string;
+  minority_count: number;
+  minority_pct: number;
+  majority_class: string;
+  majority_count: number;
+  majority_pct: number;
+  class_ratio: string;
+  is_severe: boolean;
+  recommendation: string;
+}
+
 interface DatasetMetadata {
   dataset_id: string;
   n_rows: number;
@@ -16,7 +28,17 @@ interface DatasetMetadata {
   class_dist: Record<string, number>;
   schema: {
     features: Record<string, any>;
+    target: {
+      name: string;
+      type: string;
+      cardinality: number;
+      missing_count: number;
+      missing_pct: number;
+      class_distribution: Record<string, number>;
+    };
+    skipped_features: string[];
   };
+  class_imbalance: ClassImbalanceInfo;
   filename?: string;
   target_column?: string;
 }
@@ -25,13 +47,16 @@ export default function Home() {
   const router = useRouter();
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [datasetMetadata, setDatasetMetadata] = useState<DatasetMetadata | null>(null);
-  const [selectedTarget, setSelectedTarget] = useState('fraud');
+  const [selectedTarget, setSelectedTarget] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleUploadComplete = (data: DatasetMetadata) => {
     setDatasetMetadata(data);
     setUploadStatus('success');
     setError(null);
+    // Auto-set target from schema
+    const targetName = data.schema?.target?.name ?? data.target_column ?? '';
+    setSelectedTarget(targetName);
   };
 
   const handleProceed = () => {
@@ -95,10 +120,11 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Class Imbalance Warning */}
+            {/* Class Imbalance Warning — use backend's computed info when available */}
             <ClassImbalanceWarning
               classDistribution={datasetMetadata.class_dist}
               selectedTarget={selectedTarget}
+              classImbalanceInfo={datasetMetadata.class_imbalance}
             />
 
             {/* Target Column Visualization */}

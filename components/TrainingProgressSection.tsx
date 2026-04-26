@@ -115,7 +115,7 @@ export function TrainingProgressSection({
                                         <Line
                                             type="monotone"
                                             dataKey="generator"
-                                            stroke="hsl(var(--primary))"
+                                            stroke="hsl(var(--chart-1))"
                                             strokeWidth={2}
                                             dot={false}
                                             isAnimationActive={false}
@@ -123,7 +123,7 @@ export function TrainingProgressSection({
                                         <Line
                                             type="monotone"
                                             dataKey="discriminator"
-                                            stroke="hsl(var(--muted-foreground))"
+                                            stroke="hsl(var(--chart-2))"
                                             strokeWidth={2}
                                             dot={false}
                                             isAnimationActive={false}

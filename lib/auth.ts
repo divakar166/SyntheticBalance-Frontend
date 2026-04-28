@@ -1,6 +1,10 @@
-import { SUPABASE_ANON_KEY, SUPABASE_URL, assertSupabaseConfigured } from './config';
+import {
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+  assertSupabaseConfigured,
+} from "./config";
 
-const SESSION_KEY = 'synthetic-data-auth-session';
+const SESSION_KEY = "synthetic-data-auth-session";
 
 export interface AuthUser {
   id: string;
@@ -31,13 +35,15 @@ function authHeaders(accessToken?: string) {
   return {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${accessToken || SUPABASE_ANON_KEY}`,
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 }
 
 function toSession(payload: SupabaseAuthResponse): AuthSession {
   if (!payload.access_token || !payload.refresh_token || !payload.user?.id) {
-    throw new Error(payload.error_description || payload.msg || 'Supabase auth failed.');
+    throw new Error(
+      payload.error_description || payload.msg || "Supabase auth failed.",
+    );
   }
 
   return {
@@ -46,7 +52,7 @@ function toSession(payload: SupabaseAuthResponse): AuthSession {
     expiresAt: Date.now() + (payload.expires_in || 3600) * 1000,
     user: {
       id: payload.user.id,
-      email: payload.user.email || '',
+      email: payload.user.email || "",
     },
   };
 }
@@ -54,29 +60,34 @@ function toSession(payload: SupabaseAuthResponse): AuthSession {
 async function authRequest(path: string, body: Record<string, unknown>) {
   assertSupabaseConfigured();
   const response = await fetch(`${SUPABASE_URL}/auth/v1/${path}`, {
-    method: 'POST',
+    method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(body),
   });
   const payload = (await response.json()) as SupabaseAuthResponse;
   if (!response.ok) {
-    throw new Error(payload.error_description || payload.msg || payload.error || 'Auth request failed.');
+    throw new Error(
+      payload.error_description ||
+        payload.msg ||
+        payload.error ||
+        "Auth request failed.",
+    );
   }
   return payload;
 }
 
 export function saveSession(session: AuthSession) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
 export function clearSession() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   localStorage.removeItem(SESSION_KEY);
 }
 
 export function readStoredSession(): AuthSession | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(SESSION_KEY);
   if (!raw) return null;
 
@@ -89,14 +100,21 @@ export function readStoredSession(): AuthSession | null {
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  const payload = await authRequest('token?grant_type=password', { email, password });
+  const payload = await authRequest("token?grant_type=password", {
+    email,
+    password,
+  });
   const session = toSession(payload);
   saveSession(session);
   return session;
 }
 
 export async function signUpWithPassword(email: string, password: string) {
-  const payload = await authRequest('signup', { email, password });
+  const payload = await authRequest("signup", {
+    email,
+    password,
+    options: { emailRedirectTo: `${window.location.origin}/login` },
+  });
   if (!payload.access_token) {
     return null;
   }
@@ -106,7 +124,7 @@ export async function signUpWithPassword(email: string, password: string) {
 }
 
 export async function refreshAuthSession(session: AuthSession) {
-  const payload = await authRequest('token?grant_type=refresh_token', {
+  const payload = await authRequest("token?grant_type=refresh_token", {
     refresh_token: session.refreshToken,
   });
   const nextSession = toSession(payload);
@@ -123,7 +141,7 @@ export async function signOut(session: AuthSession | null) {
   try {
     assertSupabaseConfigured();
     await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
-      method: 'POST',
+      method: "POST",
       headers: authHeaders(session.accessToken),
     });
   } finally {

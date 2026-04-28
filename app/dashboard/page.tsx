@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UploadSection } from '@/components/UploadSection';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Database, LogOut, RefreshCw } from 'lucide-react';
 import { useRequireAuth } from '@/components/AuthProvider';
 import { DatasetMetadata, DatasetSummary, deleteDataset, listDatasets } from '@/lib/api';
@@ -84,13 +83,23 @@ export default function DashboardPage() {
 
   const handleViewAnalysis = async (dataset: DatasetSummary) => {
     setSelectedDatasetForAnalysis(dataset);
-    // If we have the metadata already, show modal. Otherwise, need to fetch it
-    if (datasetMetadata?.dataset_id === dataset.id) {
-      setShowAnalysisModal(true);
-    } else {
-      // For now, just show a message. In production, you'd fetch the analysis
-      setShowAnalysisModal(true);
+    if (!datasetMetadata || datasetMetadata.dataset_id !== dataset.id) {
+      setDatasetMetadata({
+        dataset_id: dataset.id,
+        n_rows: dataset.n_rows,
+        n_features: dataset.n_features,
+        class_dist: dataset.class_dist,
+        schema: dataset.schema
+          ? { ...dataset.schema, features: dataset.schema.features ?? {} }
+          : { features: {} },
+        filename: dataset.filename,
+        target_column: dataset.target,
+      });
     }
+    if (dataset.target) {
+      setSelectedTarget(dataset.target);
+    }
+    setShowAnalysisModal(true);
   };
 
   if (isLoading || !session) {
@@ -99,8 +108,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
             <Database className="h-6 w-6" />
@@ -118,7 +126,6 @@ export default function DashboardPage() {
       </nav>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Section */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Dataset Workspace</h2>
@@ -137,14 +144,12 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive border border-destructive/20">
             {error}
           </div>
         )}
 
-        {/* Metrics */}
         <section className="grid gap-4 md:grid-cols-3">
           <MetricCard
             label="Real Datasets"
@@ -163,11 +168,8 @@ export default function DashboardPage() {
           />
         </section>
 
-        {/* Main Layout */}
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          {/* Datasets Section */}
           <div className="space-y-6">
-            {/* Real Datasets */}
             {realDatasets.length > 0 && (
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold">Real Datasets</h3>
@@ -186,7 +188,6 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* Synthetic Datasets */}
             {syntheticDatasets.length > 0 && (
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold">Generated Synthetic Data</h3>
@@ -205,7 +206,6 @@ export default function DashboardPage() {
               </section>
             )}
 
-            {/* Empty State */}
             {datasets.length === 0 && (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -219,7 +219,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Upload Section */}
           <div>
             <UploadSection
               onUploadComplete={handleUploadComplete}
@@ -232,7 +231,6 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Analysis Modal */}
       {selectedDatasetForAnalysis && (
         <DatasetAnalysisModal
           isOpen={showAnalysisModal}
@@ -260,7 +258,7 @@ function MetricCard({
 }) {
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <p className="mt-2 text-4xl font-bold">{value}</p>
         <p className="mt-1 text-xs text-muted-foreground">{description}</p>

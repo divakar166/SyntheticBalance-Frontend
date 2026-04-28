@@ -10,13 +10,7 @@ import { TrainingConfigSection } from '@/components/TrainingConfigSection';
 import { TrainingProgressSection } from '@/components/TrainingProgressSection';
 import { TrainingCompletedSection } from '@/components/TrainingCompletedSection';
 import { useRequireAuth } from '@/components/AuthProvider';
-import { LossPoint, getTrainingStatus, startTraining } from '@/lib/api';
-
-interface TrainingConfig {
-  epochs: number;
-  batchSize: number;
-  model: 'CTGAN' | 'Tabular Diffusion';
-}
+import { type TrainingConfig, LossPoint, getTrainingStatus, startTraining } from '@/lib/api';
 
 interface TrainingStatus {
   status: 'idle' | 'queued' | 'training' | 'completed' | 'failed';
@@ -45,8 +39,18 @@ export default function TrainPage() {
   const [datasetId, setDatasetId] = useState('');
   const [trainingConfig, setTrainingConfig] = useState<TrainingConfig>({
     epochs: 100,
-    batchSize: 256,
-    model: 'CTGAN',
+    batch_size: 256,
+    embedding_dim: 128,
+    generator_dim: [128, 128],
+    discriminator_dim: [128, 128],
+    generator_lr: 2e-4,
+    discriminator_lr: 2e-4,
+    discriminator_steps: 1,
+    early_stopping: true,
+    early_stopping_patience: 20,
+    early_stopping_min_delta: 0.001,
+    run_sdmetrics: true,
+    sdmetrics_n_samples: 2000,
   });
   const [trainingStatus, setTrainingStatus] = useState<TrainingStatus>({
     status: 'idle',
@@ -129,7 +133,7 @@ export default function TrainPage() {
     });
 
     try {
-      const data = await startTraining(datasetId, trainingConfig.epochs, session);
+      const data = await startTraining(datasetId, trainingConfig, session);
       setTrainingStatus((prev) => ({
         ...prev,
         status: normalizeStatus(data.status),

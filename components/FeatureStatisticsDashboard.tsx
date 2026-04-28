@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface TopValueItem {
   value: string;
@@ -80,12 +81,12 @@ export function FeatureStatisticsDashboard({
 
       <CardContent className="w-full">
         <Tabs defaultValue={featureArray[0]?.name ?? ''} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-6">
+          <TabsList className="flex flex-wrap h-auto w-full justify-start gap-1 mb-6 p-1 overflow-x-auto">
             {featureArray.map((feature) => (
               <TabsTrigger
                 key={feature.name}
                 value={feature.name}
-                className="text-xs"
+                className="text-xs shrink-0 whitespace-nowrap"
               >
                 {feature.name}
               </TabsTrigger>
@@ -98,7 +99,6 @@ export function FeatureStatisticsDashboard({
               value={feature.name}
               className="space-y-4 mt-4 w-full"
             >
-              {/* Summary row */}
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">Data Type</p>
@@ -133,7 +133,6 @@ export function FeatureStatisticsDashboard({
 
               {feature.type === 'numeric' ? (
                 <div className="space-y-4">
-                  {/* Bar chart: min / Q1 / median / mean / Q3 / max */}
                   <div>
                     <h4 className="mb-2 text-sm font-semibold">Distribution Summary</h4>
                     <div className="h-64 w-full">
@@ -153,17 +152,15 @@ export function FeatureStatisticsDashboard({
                           <YAxis />
                           <Tooltip
                             contentStyle={{
-                              backgroundColor: 'hsl(var(--background))',
-                              border: '1px solid hsl(var(--border))',
+                              backgroundColor: '#1a1a2e',
+                              border: '1px solid #6366f1',
                               borderRadius: '6px',
+                              color: '#fff',
                             }}
-                            formatter={(value: number) => value.toFixed(2)}
+                            labelStyle={{ color: '#a5b4fc', fontWeight: 600 }}
+                            formatter={(value: number) => [value.toFixed(2), '']}
                           />
-                          <Bar
-                            dataKey="value"
-                            fill="hsl(var(--chart-1))"
-                            radius={[4, 4, 0, 0]}
-                          />
+                          <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -216,7 +213,7 @@ export function FeatureStatisticsDashboard({
                             {/* Inline bar */}
                             <div className="flex-1 overflow-hidden rounded-full bg-muted h-2">
                               <div
-                                className="h-2 rounded-full bg-primary/70 transition-all"
+                                className="h-2 rounded-full bg-indigo-500 transition-all"
                                 style={{ width: `${Math.min(100, item.pct)}%` }}
                               />
                             </div>

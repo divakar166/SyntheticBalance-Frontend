@@ -37,7 +37,6 @@ function getDatasetStage(dataset: DatasetSummary): DatasetStage {
   if (dataset.has_model) {
     return 'trained';
   }
-  // We assume if data is in the system, it's at least analyzed
   return 'analyzed';
 }
 
@@ -83,7 +82,6 @@ export function DatasetCard({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Stage Indicator */}
         <DatasetStageIndicator
           currentStage={stage}
           hasAnalysis={true}
@@ -93,7 +91,6 @@ export function DatasetCard({
 
         <Separator className="my-2" />
 
-        {/* Metadata Grid */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-lg bg-muted/50 p-3">
             <p className="text-xs text-muted-foreground">Rows</p>
@@ -111,7 +108,6 @@ export function DatasetCard({
           )}
         </div>
 
-        {/* Status Badges */}
         <div className="flex flex-wrap gap-2">
           <Badge variant={isSynthetic ? 'secondary' : 'outline'} className="text-xs">
             {isSynthetic ? 'Synthetic' : 'Real'}
@@ -130,7 +126,6 @@ export function DatasetCard({
 
         <Separator className="my-2" />
 
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-2">
           {!isSynthetic && (
             <>
@@ -141,7 +136,7 @@ export function DatasetCard({
                 className="flex-1 gap-2 text-xs"
               >
                 <Eye className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Analysis</span>
+                <span className="hidden sm:inline hover:cursor-pointer">Analysis</span>
               </Button>
               {!isTrained ? (
                 <Button
@@ -150,7 +145,7 @@ export function DatasetCard({
                   className="flex-1 gap-2 text-xs"
                 >
                   <Play className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">Train</span>
+                  <span className="hidden sm:inline hover:cursor-pointer">Train</span>
                 </Button>
               ) : (
                 <Button

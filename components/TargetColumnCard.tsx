@@ -8,13 +8,7 @@ interface TargetColumnCardProps {
   classDistribution: Record<string, number>;
 }
 
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-];
+const COLORS = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
 export function TargetColumnCard({
   targetColumn,
@@ -60,14 +54,6 @@ export function TargetColumnCard({
                   />
                 ))}
               </Pie>
-              <Tooltip
-                formatter={(value: number) => `${value} samples`}
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '6px',
-                }}
-              />
               <Legend />
             </PieChart>
           </ResponsiveContainer>

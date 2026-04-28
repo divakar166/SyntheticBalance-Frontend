@@ -27,7 +27,6 @@ export function ClassImbalanceWarning({
   selectedTarget,
   classImbalanceInfo,
 }: ClassImbalanceWarningProps) {
-  // Prefer backend-computed values; fall back to client-computed
   const total = Object.values(classDistribution).reduce((a, b) => a + b, 0);
   const entries = Object.entries(classDistribution).sort((a, b) => b[1] - a[1]);
   const minorityClass = classImbalanceInfo?.minority_class ?? entries[entries.length - 1][0];

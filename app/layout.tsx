@@ -1,8 +1,18 @@
 import type { Metadata } from 'next'
-import { Analytics } from '@vercel/analytics/next'
+import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from '@/components/AuthProvider'
 import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: 'Synthetic Data Generator',
@@ -37,7 +47,6 @@ export default function RootLayout({
       <body className="font-sans antialiased bg-background text-foreground">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>{children}</AuthProvider>
-          {process.env.NODE_ENV === 'production' && <Analytics />}
         </ThemeProvider>
       </body>
     </html>

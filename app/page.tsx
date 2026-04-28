@@ -37,6 +37,7 @@ export default function Home() {
             <Button
               onClick={() => router.push('/login')}
               variant="default"
+              className="hover:cursor-pointer"
             >
               Login
             </Button>
@@ -58,7 +59,7 @@ export default function Home() {
               <Button
                 size="lg"
                 onClick={() => router.push('/login')}
-                className="gap-2"
+                className="gap-2 hover:cursor-pointer"
               >
                 Get Started
                 <ArrowRight className="h-4 w-4" />
@@ -66,6 +67,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
+                className="hover:cursor-pointer"
               >
                 Learn More
               </Button>
@@ -159,7 +161,7 @@ export default function Home() {
             <Button
               size="lg"
               onClick={() => router.push('/login')}
-              className="gap-2"
+              className="gap-2 hover:cursor-pointer"
             >
               Get Started Now
               <ArrowRight className="h-4 w-4" />

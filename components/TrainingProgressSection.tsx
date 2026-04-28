@@ -97,11 +97,11 @@ export function TrainingProgressSection({
                                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                                         <XAxis
                                             dataKey="epoch"
-                                            stroke="hsl(var(--muted-foreground))"
+                                            stroke="#94a3b8"
                                             style={{ fontSize: '12px' }}
                                         />
                                         <YAxis
-                                            stroke="hsl(var(--muted-foreground))"
+                                            stroke="#94a3b8"
                                             style={{ fontSize: '12px' }}
                                         />
                                         <Tooltip
@@ -115,7 +115,7 @@ export function TrainingProgressSection({
                                         <Line
                                             type="monotone"
                                             dataKey="generator"
-                                            stroke="hsl(var(--chart-1))"
+                                            stroke="#6366f1"
                                             strokeWidth={2}
                                             dot={false}
                                             isAnimationActive={false}
@@ -123,7 +123,7 @@ export function TrainingProgressSection({
                                         <Line
                                             type="monotone"
                                             dataKey="discriminator"
-                                            stroke="hsl(var(--chart-2))"
+                                            stroke="#f43f5e"
                                             strokeWidth={2}
                                             dot={false}
                                             isAnimationActive={false}

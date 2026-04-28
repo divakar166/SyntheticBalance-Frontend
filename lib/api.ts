@@ -1,6 +1,27 @@
 import { API_BASE_URL } from "./config";
 import { AuthSession, clearSession, getFreshSession } from "./auth";
 
+export interface TrainingModel {
+  id: string;
+  dataset_id: string;
+  status: string;
+  config?: TrainingConfig | null;
+  created_at?: string;
+  training_time_seconds?: number | null;
+  final_loss?: number | null;
+  epochs_trained?: number | null;
+  sdmetrics?: SDMetricsReport | null;
+}
+
+export interface SyntheticDataSummary {
+  id: string;
+  source_dataset_id: string;
+  source_model_id?: string;
+  n_rows: number;
+  status: string;
+  created_at?: string;
+}
+
 export interface DatasetSummary {
   id: string;
   filename?: string;
@@ -17,6 +38,8 @@ export interface DatasetSummary {
   has_model: boolean;
   latest_training_job?: JobSummary | null;
   latest_generation_job?: JobSummary | null;
+  models?: TrainingModel[];
+  synthetic_data?: SyntheticDataSummary[];
 }
 
 export interface JobSummary {

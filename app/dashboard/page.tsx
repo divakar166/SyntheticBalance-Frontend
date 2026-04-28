@@ -9,8 +9,10 @@ import { Database, LogOut, RefreshCw } from 'lucide-react';
 import { useRequireAuth } from '@/components/AuthProvider';
 import { DatasetMetadata, DatasetSummary, deleteDataset, listDatasets } from '@/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { DatasetCard } from '@/components/DatasetCard';
 import { DatasetAnalysisModal } from '@/components/DatasetAnalysisModal';
+import { DatasetsTable } from '@/components/DatasetsTable';
+import { ModelsTable } from '@/components/ModelsTable';
+import { SyntheticDataTable } from '@/components/SyntheticDataTable';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,6 +25,7 @@ export default function DashboardPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedDatasetForAnalysis, setSelectedDatasetForAnalysis] = useState<DatasetSummary | null>(null);
+  const [selectedDataset, setSelectedDataset] = useState<DatasetSummary | null>(null);
 
   const realDatasets = useMemo(
     () => datasets.filter((dataset) => dataset.dataset_type !== 'synthetic'),
@@ -150,84 +153,73 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <section className="grid gap-4 md:grid-cols-3">
-          <MetricCard
-            label="Real Datasets"
-            value={realDatasets.length}
-            description="Uploaded datasets"
-          />
-          <MetricCard
-            label="Trained Models"
-            value={realDatasets.filter((d) => d.has_model).length}
-            description="Ready to generate"
-          />
-          <MetricCard
-            label="Synthetic Datasets"
-            value={syntheticDatasets.length}
-            description="Generated data"
-          />
+        <section className="space-y-6">
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Datasets</h3>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/dashboard/training-analysis">View Training Analysis</a>
+              </Button>
+            </div>
+            <DatasetsTable
+              datasets={realDatasets}
+              onTrain={handleTrain}
+              onGenerate={handleGenerate}
+              onDelete={handleDelete}
+              onViewAnalysis={handleViewAnalysis}
+            />
+          </section>
+
+          {selectedDataset && (
+            <section className="space-y-4">
+              <h3 className="text-lg font-semibold">
+                Models for {selectedDataset.filename || selectedDataset.id}
+              </h3>
+              <ModelsTable
+                models={selectedDataset.models || []}
+                onGenerate={(model) => {
+                  router.push(`/generate?datasetId=${selectedDataset.id}&modelId=${model.id}`);
+                }}
+                onRetrain={(model) => {
+                  router.push(`/train?datasetId=${selectedDataset.id}&modelId=${model.id}`);
+                }}
+                onDelete={(model) => {
+                  if (!window.confirm('Delete this model?')) return;
+                  // TODO: Implement model deletion
+                }}
+              />
+            </section>
+          )}
+
+          {realDatasets.some((d) => (d.synthetic_data || []).length > 0) && (
+            <section className="space-y-4">
+              <h3 className="text-lg font-semibold">Generated Synthetic Data</h3>
+              <div className="space-y-4">
+                {realDatasets
+                  .filter((d) => (d.synthetic_data || []).length > 0)
+                  .map((dataset) => (
+                    <SyntheticDataTable
+                      key={dataset.id}
+                      syntheticData={dataset.synthetic_data || []}
+                      onDelete={(data) => {
+                        if (!window.confirm('Delete this synthetic dataset?')) return;
+                        // TODO: Implement synthetic data deletion
+                      }}
+                    />
+                  ))}
+              </div>
+            </section>
+          )}
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-          <div className="space-y-6">
-            {realDatasets.length > 0 && (
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold">Real Datasets</h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {realDatasets.map((dataset) => (
-                    <DatasetCard
-                      key={dataset.id}
-                      dataset={dataset}
-                      onViewAnalysis={handleViewAnalysis}
-                      onTrain={handleTrain}
-                      onGenerate={handleGenerate}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {syntheticDatasets.length > 0 && (
-              <section className="space-y-4">
-                <h3 className="text-lg font-semibold">Generated Synthetic Data</h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {syntheticDatasets.map((dataset) => (
-                    <DatasetCard
-                      key={dataset.id}
-                      dataset={dataset}
-                      onViewAnalysis={handleViewAnalysis}
-                      onTrain={handleTrain}
-                      onGenerate={handleGenerate}
-                      onDelete={handleDelete}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {datasets.length === 0 && (
-              <Card className="border-dashed">
-                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                  <Database className="mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-                  <h3 className="text-lg font-semibold">No datasets yet</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Upload a CSV file to get started with your first dataset.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-
-          <div>
-            <UploadSection
-              onUploadComplete={handleUploadComplete}
-              isLoading={uploadStatus === 'uploading'}
-              error={null}
-              onTargetChange={setSelectedTarget}
-              selectedTarget={selectedTarget}
-            />
-          </div>
+        <div className="fixed bottom-6 right-6 sm:relative sm:bottom-auto sm:right-auto sm:mt-8">
+          <UploadSection
+            onUploadComplete={handleUploadComplete}
+            isLoading={uploadStatus === 'uploading'}
+            error={null}
+            onTargetChange={setSelectedTarget}
+            selectedTarget={selectedTarget}
+          />
         </div>
       </main>
 
@@ -244,25 +236,5 @@ export default function DashboardPage() {
         />
       )}
     </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  description,
-}: {
-  label: string;
-  value: number;
-  description: string;
-}) {
-  return (
-    <Card>
-      <CardContent>
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="mt-2 text-4xl font-bold">{value}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
   );
 }
